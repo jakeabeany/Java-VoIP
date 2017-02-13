@@ -1,16 +1,16 @@
-package networks_coursework1;
+package testing;
 
 /**
  *
- * @author  Matthew Williams & Jake McVey
+ * @author Jake McVey & Matty Williams
  */
-public class TextDuplex {
+public class testingDatagrams {
     
     public static void main (String[] args){
         TextReceiverThread receiver = new TextReceiverThread();
         TextSenderThread sender = new TextSenderThread();
-        
+
         receiver.start();
-        sender.start();  
+        sender.start(); 
     }
 }
