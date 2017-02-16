@@ -1,4 +1,4 @@
-package networks_coursework1;
+package testing;
 /*
  * TextReceiver.java
  *
@@ -18,6 +18,7 @@ import uk.ac.uea.cmp.voip.DatagramSocket4;
 public class TextReceiverThread implements Runnable{
     
     static DatagramSocket receiving_socket;
+    int chosenDatagram;
     
     public void start(){
         Thread thread = new Thread(this);
@@ -36,7 +37,8 @@ public class TextReceiverThread implements Runnable{
         
         //DatagramSocket receiving_socket;
         try{
-		receiving_socket = new DatagramSocket4(PORT);
+            
+            receiving_socket = new DatagramSocket4(PORT);
 	} catch (SocketException e){
                 System.out.println("ERROR: TextReceiver: Could not open UDP socket to receive from.");
 		e.printStackTrace();

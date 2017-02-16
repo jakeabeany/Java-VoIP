@@ -1,4 +1,4 @@
-package networks_coursework1;
+package testing;
 /*
  * TextSender.java
  *
