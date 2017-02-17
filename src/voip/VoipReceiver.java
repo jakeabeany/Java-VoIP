@@ -53,11 +53,12 @@ public class VoipReceiver implements Runnable{
         while (running){
             try{
                 //Create a buffer to receive the packet
-                byte[] buffer = new byte[512];
-                DatagramPacket packet = new DatagramPacket(buffer, 0, 512);
-                
+                byte[] buffer = new byte[1536];
+                DatagramPacket packet = new DatagramPacket(buffer, 0, 1536);
+                                
                 //Receive the packet
                 receiving_socket.receive(packet);
+                
                 
                 //Play the packet
                 player.playBlock(buffer);

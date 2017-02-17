@@ -4,6 +4,7 @@ import CMPC3M06.AudioRecorder;
 import java.net.*;
 import java.io.*;
 import java.util.Vector;
+import java.nio.ByteBuffer;
 import uk.ac.uea.cmp.voip.DatagramSocket2;
 import uk.ac.uea.cmp.voip.DatagramSocket3;
 import uk.ac.uea.cmp.voip.DatagramSocket4;
@@ -39,7 +40,7 @@ public class VoipSender implements Runnable{
         //We dont need to know its port number as we never send anything to it.
         //We need the try and catch block to make sure no errors occur.
         try{
-		sending_socket = new DatagramSocket2();
+		sending_socket = new DatagramSocket();
 	} catch (SocketException e){
                 System.out.println("ERROR: VoipSender: Could not open UDP socket to send from.");
 		e.printStackTrace();
@@ -59,22 +60,31 @@ public class VoipSender implements Runnable{
         }
         
         while (running){
-            //datagram1(clientIP, PORT);
+            datagram1(clientIP, PORT);
             
-            datagram2(clientIP, PORT);
+            //datagram2(clientIP, PORT);
         }
         //Close the socket
         sending_socket.close();
     }
     
     public void datagram1(InetAddress clientIP, int PORT){
-        try{
-            //Create the block to send
-            byte[] block = recorder.getBlock();
-
+        try{            
+            byte[] temp = new byte[1536];
+            ByteBuffer tempBuf = ByteBuffer.wrap(temp);
+            
+            // send 3 packets at once
+            for(int i = 0; i < 3; i++){
+                //Create the block to send
+                byte[] block = recorder.getBlock();
+                
+                //put the packet into the temp buffer
+                tempBuf.put(block);
+            }
+            
             //Make a DatagramPacket from it, with client address and port number
-            DatagramPacket packet = new DatagramPacket(block, block.length, clientIP, PORT);
-
+            DatagramPacket packet = new DatagramPacket(temp, temp.length, clientIP, PORT);
+            
             //Send it
             sending_socket.send(packet);
         } catch (Exception e){
