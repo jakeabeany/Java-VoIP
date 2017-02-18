@@ -5,6 +5,9 @@ import java.net.*;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import uk.ac.uea.cmp.voip.DatagramSocket2;
 import uk.ac.uea.cmp.voip.DatagramSocket3;
 import uk.ac.uea.cmp.voip.DatagramSocket4;
@@ -127,4 +130,59 @@ public class VoipReceiver implements Runnable{
             e.printStackTrace();
         }
     }
+    
+    public void datagram3(){
+        boolean outOfOrder = false;
+        int repeatTimes = 1, currentHighest = 0;
+        try{
+            ArrayList<byte[]> packetList = new ArrayList<byte[]>();
+            
+            //receive 4 packets at a time and add them to alist
+            for(int alesLoop = 0; alesLoop < 4; alesLoop++){
+                //Create a buffer to receive the packet
+                byte[] buffer = new byte[516];
+                ByteBuffer tempBuf = ByteBuffer.wrap(buffer);
+
+                //create and empty packet to receive into
+                DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+
+                //Receive the packet
+                receiving_socket.receive(packet);
+
+                //get the current packet number
+                currentPacketNumber = tempBuf.getInt(0);
+
+                //add packet to arraylist and sort it using comparator
+                packetList.add(buffer);
+            }
+            
+            Collections.sort(packetList, sortByPacketNumber());
+            
+            for(byte[] b : packetList){
+                bufferToPlay = Arrays.copyOfRange(b,4,516);
+
+                player.playBlock(bufferToPlay);
+            }
+        } catch (Exception e){
+            System.out.println("ERROR: VoipReceiver IO error occurred.");
+            e.printStackTrace();
+        }
+    }
+    
+    public static Comparator<byte[]> sortByPacketNumber(){
+        Comparator comp = new Comparator<byte[]>() {
+            @Override
+            public int compare(byte[] p1, byte[] p2){
+                int p1Num, p2Num;
+
+                ByteBuffer tempP1 = ByteBuffer.wrap(p1);
+                ByteBuffer tempP2 = ByteBuffer.wrap(p2);
+
+                p1Num = tempP1.getInt(0);
+                p2Num = tempP2.getInt(0);
+                return p1Num - p2Num;
+            }
+        };
+        return comp;
+    }          
 }
