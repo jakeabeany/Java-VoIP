@@ -37,7 +37,7 @@ public class VoipReceiver implements Runnable{
         
         //DatagramSocket receiving_socket;
         try{
-		receiving_socket = new DatagramSocket2(PORT);
+		receiving_socket = new DatagramSocket3(PORT);
 	} catch (SocketException e){
                 System.out.println("ERROR: VoipReceiver: Could not open UDP socket to receive from.");
 		e.printStackTrace();
@@ -57,7 +57,9 @@ public class VoipReceiver implements Runnable{
         while (running){
             //datagram1();
             
-            datagram2();
+            //datagram2();
+            
+            datagram3();
         }
         //Close the socket
         receiving_socket.close();
