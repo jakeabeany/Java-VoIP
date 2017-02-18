@@ -3,7 +3,8 @@ package voip;
 import CMPC3M06.AudioRecorder;
 import java.net.*;
 import java.io.*;
-import java.util.Vector;
+import java.util.zip.CRC32;
+import java.util.zip.Checksum;
 import java.nio.ByteBuffer;
 import uk.ac.uea.cmp.voip.DatagramSocket2;
 import uk.ac.uea.cmp.voip.DatagramSocket3;
@@ -16,6 +17,7 @@ import uk.ac.uea.cmp.voip.DatagramSocket4;
 public class VoipSender implements Runnable{
     static DatagramSocket sending_socket;
     AudioRecorder recorder;
+    int packetNumber = 0;
     
     public void start(){
         Thread thread = new Thread(this);
@@ -40,7 +42,8 @@ public class VoipSender implements Runnable{
         //We dont need to know its port number as we never send anything to it.
         //We need the try and catch block to make sure no errors occur.
         try{
-		sending_socket = new DatagramSocket();
+		sending_socket = new DatagramSocket2();
+                
 	} catch (SocketException e){
                 System.out.println("ERROR: VoipSender: Could not open UDP socket to send from.");
 		e.printStackTrace();
@@ -60,9 +63,10 @@ public class VoipSender implements Runnable{
         }
         
         while (running){
-            datagram1(clientIP, PORT);
             
-            //datagram2(clientIP, PORT);
+            //datagram1(clientIP, PORT);
+            
+            datagram2(clientIP, PORT);
         }
         //Close the socket
         sending_socket.close();
@@ -87,6 +91,7 @@ public class VoipSender implements Runnable{
             
             //Send it
             sending_socket.send(packet);
+            packetNumber++;
         } catch (Exception e){
             System.out.println("ERROR: Void Sender: Some random IO error occured!");
             e.printStackTrace();
@@ -94,15 +99,28 @@ public class VoipSender implements Runnable{
     }
     
     public void datagram2(InetAddress clientIP, int PORT){
+        
         try{
-            //Create the block to send
+            //Create the block to contain the data to transfer
             byte[] block = recorder.getBlock();
-
-            //Make a DatagramPacket from it, with client address and port number
-            DatagramPacket packet = new DatagramPacket(block, block.length, clientIP, PORT);
+            
+            //create a temp block with 8 extra bits for CRC to send
+            byte[] temp = new byte[block.length + 4];
+            ByteBuffer tempBuf = ByteBuffer.wrap(temp);
+            
+            //put header int on the packet to transfer
+            tempBuf.putInt(packetNumber);
+            
+            //add data block to transfer packet
+            tempBuf.put(block);
+            
+            //Make a DatagramPacket
+            DatagramPacket packet = new DatagramPacket(temp, temp.length, clientIP, PORT);
 
             //Send it
             sending_socket.send(packet);
+            
+            packetNumber++;
         } catch (Exception e){
             System.out.println("ERROR: Void Sender: Some random IO error occured!");
             e.printStackTrace();
