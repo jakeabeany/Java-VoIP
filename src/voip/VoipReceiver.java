@@ -18,7 +18,7 @@ public class VoipReceiver implements Runnable{
     static DatagramSocket receiving_socket;
     AudioPlayer player;
     int lastPacketReceived = 0, currentPacketNumber = 0;
-    byte[] lastPacket = new byte[512];
+    byte[] bufferToPlay = new byte[512];
     
     public void start(){
         Thread thread = new Thread(this);
@@ -57,7 +57,7 @@ public class VoipReceiver implements Runnable{
         while (running){
             //datagram1();
             
-            datagram2(lastPacket);
+            datagram2();
         }
         //Close the socket
         receiving_socket.close();
@@ -83,12 +83,15 @@ public class VoipReceiver implements Runnable{
         }
     }
     
-    public void datagram2(byte[] lPacket){
+    public void datagram2(){
         boolean playLast = false;
+        int repeatTimes = 1;
         try{
             //Create a buffer to receive the packet
             byte[] buffer = new byte[516];
             ByteBuffer tempBuf = ByteBuffer.wrap(buffer);
+            
+            //create and empty packet to receive into
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
             
             //Receive the packet
@@ -97,23 +100,25 @@ public class VoipReceiver implements Runnable{
             //get the current packet number
             currentPacketNumber = tempBuf.getInt(0);
             
+            //playList becomess true if packets arrived out of order
+            //repeatTimes is the difference in order between the current packet and the last one received
             if(currentPacketNumber != lastPacketReceived+1 && currentPacketNumber != 0){
                 playLast = true;
-                //System.out.println(currentPacketNumber + "here");
+                repeatTimes = currentPacketNumber - lastPacketReceived;
             }
             
-            //populate the array that will be played
-            byte[] bufferToPlay = Arrays.copyOfRange(buffer,4,buffer.length);
+            //if the packets are in order, create space for a new buffer and fill it
+            if(!playLast || currentPacketNumber == 0){
+                bufferToPlay = new byte[512];
+                bufferToPlay = Arrays.copyOfRange(buffer,4,buffer.length);
+            }
             
-            if(playLast)
-                //Play the packet
-                player.playBlock(lastPacket);
-            else
+            //play the packet however many times we need to
+            for(int i = 0; i < repeatTimes; i++){
                 player.playBlock(bufferToPlay);
+            }
             
-            //get last packet
-            lastPacket = Arrays.copyOfRange(buffer, 4, buffer.length);
-            
+            //get the last packet number
             lastPacketReceived = tempBuf.getInt(0);
         } catch (Exception e){
             System.out.println("ERROR: VoipReceiver IO error occurred.");
