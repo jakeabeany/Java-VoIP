@@ -132,35 +132,38 @@ public class VoipReceiver implements Runnable{
     }
     
     public void datagram3(){
-        boolean outOfOrder = false;
-        int repeatTimes = 1, currentHighest = 0;
         try{
             ArrayList<byte[]> packetList = new ArrayList<byte[]>();
+            ByteBuffer tempBuf;
             
             //receive 4 packets at a time and add them to alist
-            for(int alesLoop = 0; alesLoop < 4; alesLoop++){
+            for(int looper = 0; looper < 4; looper++){
                 //Create a buffer to receive the packet
                 byte[] buffer = new byte[516];
-                ByteBuffer tempBuf = ByteBuffer.wrap(buffer);
-
+                tempBuf = ByteBuffer.wrap(buffer);
+                
                 //create and empty packet to receive into
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
 
                 //Receive the packet
                 receiving_socket.receive(packet);
 
-                //get the current packet number
-                currentPacketNumber = tempBuf.getInt(0);
-
                 //add packet to arraylist and sort it using comparator
                 packetList.add(buffer);
             }
             
+            //sort the bursts of 4 packets
             Collections.sort(packetList, sortByPacketNumber());
             
+            
             for(byte[] b : packetList){
+                ByteBuffer lmao = ByteBuffer.wrap(b);
+                int lmaoo = lmao.getInt(0);
+                System.out.println(lmaoo);
+                
+                bufferToPlay = new byte[512];
                 bufferToPlay = Arrays.copyOfRange(b,4,516);
-
+                
                 player.playBlock(bufferToPlay);
             }
         } catch (Exception e){
