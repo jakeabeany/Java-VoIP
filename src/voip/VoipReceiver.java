@@ -78,8 +78,6 @@ public class VoipReceiver implements Runnable{
 
             //Receive the packet
             receiving_socket.receive(packet);
-
-            inter.deInterleave(buffer);
             
             //Play the packet
             player.playBlock(buffer);

@@ -90,8 +90,6 @@ public class VoipSender implements Runnable{
                 tempBuf.put(block);
             }
             
-            inter.interleave(temp);
-            
             //Make a DatagramPacket from it, with client address and port number
             DatagramPacket packet = new DatagramPacket(temp, temp.length, 
                     clientIP, PORT);
@@ -166,7 +164,33 @@ public class VoipSender implements Runnable{
     }
     
     public void datagram4(InetAddress clientIP, int PORT){
-     
+        try{
+            //Create the block to contain the data to transfer
+            byte[] block = recorder.getBlock();
+            
+            //create a temp block with 8 extra bits for CRC to send
+            byte[] temp = new byte[block.length + 4];
+            ByteBuffer tempBuf = ByteBuffer.wrap(temp);
+            
+            //put header int on the packet to transfer
+            tempBuf.putInt(packetNumber);
+            
+            //add data block to transfer packet
+            tempBuf.put(block);
+            
+            inter.interleave(temp);
+             
+            //Make a DatagramPacket
+            DatagramPacket packet = new DatagramPacket(temp, temp.length, clientIP, PORT);
+
+            //Send it
+            sending_socket.send(packet);
+            
+            packetNumber++;
+        } catch (Exception e){
+            System.out.println("ERROR: Void Sender: Some random IO error occured!");
+            e.printStackTrace();
+        }
     }
 } 
 
