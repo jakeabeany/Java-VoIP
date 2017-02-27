@@ -11,10 +11,10 @@ public class Interleaver {
     /**
      * Public API method
      *
-     * @param matrix
-     * @return
+     * @param array
      */
-    public void interleave(byte[][] matrix) {
+    public void interleave(byte[] array) {
+        byte[][] matrix = convert2D(array, array.length);
         byte[][] rotatedMatrix = rotateMatrix(matrix, matrix.length);
         interleavedPackets = convert1D(rotatedMatrix, rotatedMatrix.length);
     }
@@ -23,9 +23,9 @@ public class Interleaver {
      * Public API method
      *
      * @param matrix
-     * @return
      */
-    public void deInterleave(byte[][] matrix) {
+    public void deInterleave(byte[] array) {
+        byte[][] matrix = convert2D(array, array.length);
         byte[][] deRotatedMatrix = deRotateMatrix(matrix, matrix.length);
         interleavedPackets = convert1D(deRotatedMatrix, deRotatedMatrix.length);
     }
@@ -45,6 +45,23 @@ public class Interleaver {
             }
         }
         return array;
+    }
+    
+    /**
+     * Converts a 1D array into a 2D array.
+     *
+     * @param matrix
+     * @param size
+     * @return
+     */
+    private byte[][] convert2D(byte[] array, int size) {
+        byte[][] matrix = new byte[size][size];
+        for (int i = 0; i < array.length; i++) {
+            for (int j = 0; j < array.length; j++) {
+                matrix[i][j] = array[(i * size) + j];
+            }
+        }
+        return matrix;
     }
 
     /**
