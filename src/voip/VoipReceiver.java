@@ -19,6 +19,7 @@ import uk.ac.uea.cmp.voip.DatagramSocket4;
 public class VoipReceiver implements Runnable{
     
     static DatagramSocket receiving_socket;
+    Interleaver inter = new Interleaver();
     AudioPlayer player;
     int lastPacketReceived = 0, currentPacketNumber = 0;
     byte[] bufferToPlay = new byte[512];
@@ -77,8 +78,7 @@ public class VoipReceiver implements Runnable{
 
             //Receive the packet
             receiving_socket.receive(packet);
-
-
+            
             //Play the packet
             player.playBlock(buffer);
             
@@ -104,6 +104,8 @@ public class VoipReceiver implements Runnable{
             
             //get the current packet number
             currentPacketNumber = tempBuf.getInt(0);
+            
+            inter.deInterleave(buffer);
             
             //playList becomess true if packets arrived out of order
             //repeatTimes is the difference in order between the current packet and the last one received
@@ -148,6 +150,8 @@ public class VoipReceiver implements Runnable{
                 //Receive the packet
                 receiving_socket.receive(packet);
 
+                inter.deInterleave(buffer);
+                
                 //add packet to arraylist and sort it using comparator
                 packetList.add(buffer);
             }
@@ -170,6 +174,10 @@ public class VoipReceiver implements Runnable{
             System.out.println("ERROR: VoipReceiver IO error occurred.");
             e.printStackTrace();
         }
+    }
+    
+    public void datagram4(InetAddress clientIP, int PORT){
+     
     }
     
     public static Comparator<byte[]> sortByPacketNumber(){
