@@ -105,7 +105,7 @@ public class VoipReceiver implements Runnable{
             //get the current packet number
             currentPacketNumber = tempBuf.getInt(0);
             
-            inter.deInterleave(buffer);
+            //inter.deInterleave(buffer);
             
             //playList becomess true if packets arrived out of order
             //repeatTimes is the difference in order between the current packet and the last one received
@@ -138,8 +138,8 @@ public class VoipReceiver implements Runnable{
             ArrayList<byte[]> packetList = new ArrayList<byte[]>();
             ByteBuffer tempBuf;
             
-            //receive 4 packets at a time and add them to alist
-            for(int looper = 0; looper < 4; looper++){
+            //receive 5 packets at a time and add them to alist
+            for(int looper = 0; looper < 5; looper++){
                 //Create a buffer to receive the packet
                 byte[] buffer = new byte[516];
                 tempBuf = ByteBuffer.wrap(buffer);
@@ -149,26 +149,42 @@ public class VoipReceiver implements Runnable{
 
                 //Receive the packet
                 receiving_socket.receive(packet);
-
-                inter.deInterleave(buffer);
                 
                 //add packet to arraylist and sort it using comparator
                 packetList.add(buffer);
             }
             
-            //sort the bursts of 4 packets
+            //sort the bursts of 5 packets
             Collections.sort(packetList, sortByPacketNumber());
             
-            
+            //play packets
             for(byte[] b : packetList){
-                ByteBuffer lmao = ByteBuffer.wrap(b);
-                int lmaoo = lmao.getInt(0);
-                System.out.println(lmaoo);
+                int repeatTimes = 1;
+                boolean playLast = false;
                 
-                bufferToPlay = new byte[512];
-                bufferToPlay = Arrays.copyOfRange(b,4,516);
+                ByteBuffer bufferForRepeating = ByteBuffer.wrap(b);
+                currentPacketNumber = bufferForRepeating.getInt(0);
                 
-                player.playBlock(bufferToPlay);
+                
+                //ignore packet if it is still out of position
+                if(currentPacketNumber >= lastPacketReceived){                    
+                    if(currentPacketNumber != (lastPacketReceived+1)){
+                        playLast = true;
+                        repeatTimes = currentPacketNumber - lastPacketReceived;
+                    }
+                    
+                    //only create a new buffer to play if no repeating is needed
+                    if(!playLast || currentPacketNumber == 0){
+                        bufferToPlay = new byte[512];
+                        bufferToPlay = Arrays.copyOfRange(b,4,b.length);
+                    }
+
+                    //play the packet however many times we need to
+                    for(int i = 0; i < repeatTimes; i++){
+                        player.playBlock(bufferToPlay);
+                    }
+                    lastPacketReceived = bufferForRepeating.getInt(0);
+                }
             }
         } catch (Exception e){
             System.out.println("ERROR: VoipReceiver IO error occurred.");
@@ -177,7 +193,7 @@ public class VoipReceiver implements Runnable{
     }
     
     public void datagram4(InetAddress clientIP, int PORT){
-     
+        
     }
     
     public static Comparator<byte[]> sortByPacketNumber(){

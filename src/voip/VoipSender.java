@@ -118,8 +118,6 @@ public class VoipSender implements Runnable{
             //add data block to transfer packet
             tempBuf.put(block);
             
-            inter.interleave(temp);
-            
             //Make a DatagramPacket
             DatagramPacket packet = new DatagramPacket(temp, temp.length, clientIP, PORT);
 
@@ -148,8 +146,6 @@ public class VoipSender implements Runnable{
             //add data block to transfer packet
             tempBuf.put(block);
             
-            inter.interleave(temp);
-             
             //Make a DatagramPacket
             DatagramPacket packet = new DatagramPacket(temp, temp.length, clientIP, PORT);
 
@@ -178,7 +174,6 @@ public class VoipSender implements Runnable{
             //add data block to transfer packet
             tempBuf.put(block);
             
-            inter.interleave(temp);
              
             //Make a DatagramPacket
             DatagramPacket packet = new DatagramPacket(temp, temp.length, clientIP, PORT);
