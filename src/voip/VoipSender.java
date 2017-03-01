@@ -20,6 +20,10 @@ public class VoipSender implements Runnable{
     AudioRecorder recorder;
     int packetNumber = 0;
     
+    public VoipSender(DatagramSocket dg){
+        sending_socket = dg;
+    }
+    
     public void start(){
         Thread thread = new Thread(this);
 	thread.start();
@@ -42,14 +46,14 @@ public class VoipSender implements Runnable{
         //Open a socket to send from
         //We dont need to know its port number as we never send anything to it.
         //We need the try and catch block to make sure no errors occur.
-        try{
-		sending_socket = new DatagramSocket3();
-                
-	} catch (SocketException e){
-                System.out.println("ERROR: VoipSender: Could not open UDP socket to send from.");
-		e.printStackTrace();
-                System.exit(0);
-	}
+//        try{
+//		sending_socket = new DatagramSocket4();
+//                
+//	} catch (SocketException e){
+//                System.out.println("ERROR: VoipSender: Could not open UDP socket to send from.");
+//		e.printStackTrace();
+//                System.exit(0);
+//	}
         //***************************************************
      
         //Main loop.
@@ -67,15 +71,18 @@ public class VoipSender implements Runnable{
             
             //datagram1(clientIP, PORT);
             
-            //datagram2(clientIP, PORT);
+            datagram2(clientIP, PORT);
             
-            datagram3(clientIP, PORT);
+            //datagram3(clientIP, PORT);
+            
+            //datagram4(clientIP, PORT);
         }
         //Close the socket
         sending_socket.close();
     }
     
     public void datagram1(InetAddress clientIP, int PORT){
+        //System.out.println("Sending on datagram1");
         try{ 
             byte[] temp = new byte[1536];
             
@@ -96,7 +103,6 @@ public class VoipSender implements Runnable{
             
             //Send it
             sending_socket.send(packet);
-            packetNumber++;
         } catch (Exception e){
             System.out.println("ERROR: Void Sender: Some random IO error occured!");
             e.printStackTrace();
@@ -104,11 +110,12 @@ public class VoipSender implements Runnable{
     }
     
     public void datagram2(InetAddress clientIP, int PORT){
+        //System.out.println("Sending on datagram2");
         try{       
             //Create the block to contain the data to transfer
             byte[] block = recorder.getBlock();
             
-            //create a temp block with 8 extra bits for CRC to send
+            //create a temp block with 4 extra bits for the packet number
             byte[] temp = new byte[block.length + 4];
             ByteBuffer tempBuf = ByteBuffer.wrap(temp);
             
@@ -132,11 +139,12 @@ public class VoipSender implements Runnable{
     }
     
     public void datagram3(InetAddress clientIP, int PORT){
+        //System.out.println("Sending on datagram3");
         try{
             //Create the block to contain the data to transfer
             byte[] block = recorder.getBlock();
             
-            //create a temp block with 8 extra bits for CRC to send
+            //create a temp block with 4 extra bits for the packet number
             byte[] temp = new byte[block.length + 4];
             ByteBuffer tempBuf = ByteBuffer.wrap(temp);
             
@@ -160,20 +168,30 @@ public class VoipSender implements Runnable{
     }
     
     public void datagram4(InetAddress clientIP, int PORT){
+        //System.out.println("Sending on datagram4");
         try{
+            Checksum checksum = new CRC32();
+            
             //Create the block to contain the data to transfer
             byte[] block = recorder.getBlock();
             
             //create a temp block with 8 extra bits for CRC to send
-            byte[] temp = new byte[block.length + 4];
+            byte[] temp = new byte[block.length + 12];
             ByteBuffer tempBuf = ByteBuffer.wrap(temp);
             
+            
+            checksum.update(block, 0, block.length);
+            
+            long checkSumVal = checksum.getValue();
+            
             //put header int on the packet to transfer
+            tempBuf.putLong(checkSumVal);
+            
+            //put packet number into the packet
             tempBuf.putInt(packetNumber);
             
             //add data block to transfer packet
             tempBuf.put(block);
-            
              
             //Make a DatagramPacket
             DatagramPacket packet = new DatagramPacket(temp, temp.length, clientIP, PORT);

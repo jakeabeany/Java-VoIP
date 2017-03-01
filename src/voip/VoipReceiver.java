@@ -8,6 +8,8 @@ import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.zip.CRC32;
+import java.util.zip.Checksum;
 import uk.ac.uea.cmp.voip.DatagramSocket2;
 import uk.ac.uea.cmp.voip.DatagramSocket3;
 import uk.ac.uea.cmp.voip.DatagramSocket4;
@@ -17,12 +19,15 @@ import uk.ac.uea.cmp.voip.DatagramSocket4;
  * @author Jake McVey & Matthew Williams
  */
 public class VoipReceiver implements Runnable{
-    
     static DatagramSocket receiving_socket;
     Interleaver inter = new Interleaver();
     AudioPlayer player;
     int lastPacketReceived = 0, currentPacketNumber = 0;
     byte[] bufferToPlay = new byte[512];
+    
+    public VoipReceiver(DatagramSocket dg){
+        receiving_socket = dg;
+    }
     
     public void start(){
         Thread thread = new Thread(this);
@@ -30,7 +35,6 @@ public class VoipReceiver implements Runnable{
     }
     
     public void run (){
-     
         //***************************************************
         //Port to open socket on
         int PORT = 55555;
@@ -39,14 +43,13 @@ public class VoipReceiver implements Runnable{
         //***************************************************
         //Open a socket to receive from on port PORT
         
-        //DatagramSocket receiving_socket;
-        try{
-		receiving_socket = new DatagramSocket3(PORT);
-	} catch (SocketException e){
-                System.out.println("ERROR: VoipReceiver: Could not open UDP socket to receive from.");
-		e.printStackTrace();
-                System.exit(0);
-	}
+//        try{
+//		receiving_socket = new DatagramSocket4(PORT);
+//	} catch (SocketException e){
+//                System.out.println("ERROR: VoipReceiver: Could not open UDP socket to receive from.");
+//		e.printStackTrace();
+//                System.exit(0);
+//	}
         //***************************************************
         
         try{
@@ -59,11 +62,14 @@ public class VoipReceiver implements Runnable{
         //Main loop.
         boolean running = true;
         while (running){
+            
             //datagram1();
             
-            //datagram2();
+            datagram2();
             
-            datagram3();
+            //datagram3();
+            
+            //datagram4();
         }
         //Close the socket
         receiving_socket.close();
@@ -71,6 +77,7 @@ public class VoipReceiver implements Runnable{
     }
     
     public void datagram1(){
+        //System.out.println("Receiving on datagram1");
         try{
             //Create a buffer to receive the packet
             byte[] buffer = new byte[1536];
@@ -89,6 +96,7 @@ public class VoipReceiver implements Runnable{
     }
     
     public void datagram2(){
+        //System.out.println("Receiving on datagram2");
         boolean playLast = false;
         int repeatTimes = 1;
         try{
@@ -104,8 +112,6 @@ public class VoipReceiver implements Runnable{
             
             //get the current packet number
             currentPacketNumber = tempBuf.getInt(0);
-            
-            //inter.deInterleave(buffer);
             
             //playList becomess true if packets arrived out of order
             //repeatTimes is the difference in order between the current packet and the last one received
@@ -134,6 +140,7 @@ public class VoipReceiver implements Runnable{
     }
     
     public void datagram3(){
+        //System.out.println("Receiving on datagram3");
         try{
             ArrayList<byte[]> packetList = new ArrayList<byte[]>();
             ByteBuffer tempBuf;
@@ -192,10 +199,61 @@ public class VoipReceiver implements Runnable{
         }
     }
     
-    public void datagram4(InetAddress clientIP, int PORT){
-        
+    public void datagram4(){
+        //System.out.println("Receiving on datagram4");
+        int repeatTimes = 1;
+        try{
+            Checksum checksum = new CRC32();
+            
+            //Create a buffer to receive the packet
+            byte[] buffer = new byte[524];
+            ByteBuffer tempBuf = ByteBuffer.wrap(buffer);
+            
+            //create and empty packet to receive into
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+            
+            //Receive the packet
+            receiving_socket.receive(packet);
+            
+            //Get the CRC code calculated before sending
+            long receivedLong = tempBuf.getLong(0);
+            
+            //Get the packet number of the packet
+            currentPacketNumber = tempBuf.getInt(8);
+            
+            
+            //Get the CRC code from the current packet
+            checksum.update(buffer, 12, buffer.length-12);
+            long checkSumVal = checksum.getValue();
+            
+            //System.out.println("CP: " + currentPacketNumber + "LP : " + lastPacketReceived + " ----> " + (receivedLong == checkSumVal));
+            
+            //packet sent is the one received, add packet to bufferToPlay
+            if(receivedLong == checkSumVal){
+                bufferToPlay = new byte[512];
+                bufferToPlay = Arrays.copyOfRange(buffer,12,buffer.length);
+            }else{//packet received is not the same as the one sent
+                //repeat the last packet received
+                repeatTimes = 2;
+            }
+            
+            for(int k = 0; k < repeatTimes; k++)
+                player.playBlock(bufferToPlay);
+            
+            
+            
+            lastPacketReceived = tempBuf.getInt(8);
+        } catch (Exception e){
+            System.out.println("ERROR: VoipReceiver IO error occurred.");
+            e.printStackTrace();
+        }
     }
     
+    /**
+     * if the first 4 bytes of the element are integers represented
+     * as bytes, compares them.
+     * 
+     */
     public static Comparator<byte[]> sortByPacketNumber(){
         Comparator comp = new Comparator<byte[]>() {
             @Override
