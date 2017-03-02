@@ -5,6 +5,10 @@ import uk.ac.uea.cmp.voip.DatagramSocket2;
 import uk.ac.uea.cmp.voip.DatagramSocket3;
 import uk.ac.uea.cmp.voip.DatagramSocket4;
 
+/**
+ * 
+ * @author Jake McVey & Matthew Williams
+ */
 public class DatagramFactory {
     /**
      * the possible datagrams to be called

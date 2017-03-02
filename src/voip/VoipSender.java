@@ -42,24 +42,8 @@ public class VoipSender implements Runnable{
                 System.exit(0);
 	}
         
-        //***************************************************
-        //Open a socket to send from
-        //We dont need to know its port number as we never send anything to it.
-        //We need the try and catch block to make sure no errors occur.
-//        try{
-//		sending_socket = new DatagramSocket4();
-//                
-//	} catch (SocketException e){
-//                System.out.println("ERROR: VoipSender: Could not open UDP socket to send from.");
-//		e.printStackTrace();
-//                System.exit(0);
-//	}
-        //***************************************************
-     
         //Main loop.
-        
         boolean running = true;
-        
         try{
             //Initialise AudioRecorder objects
             recorder = new AudioRecorder();
@@ -71,9 +55,9 @@ public class VoipSender implements Runnable{
             
             //datagram1(clientIP, PORT);
             
-            datagram2(clientIP, PORT);
+            //datagram2(clientIP, PORT);
             
-            //datagram3(clientIP, PORT);
+            datagram3(clientIP, PORT);
             
             //datagram4(clientIP, PORT);
         }
@@ -161,6 +145,7 @@ public class VoipSender implements Runnable{
             sending_socket.send(packet);
             
             packetNumber++;
+            System.out.println("Sent Packets: " + (packetNumber+1));
         } catch (Exception e){
             System.out.println("ERROR: Void Sender: Some random IO error occured!");
             e.printStackTrace();

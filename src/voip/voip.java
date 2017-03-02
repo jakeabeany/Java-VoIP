@@ -9,9 +9,9 @@ import java.net.DatagramSocket;
 public class voip {
     public static void main(String[] args){
         //set chosenDatagram
-        DatagramSocket dg = null;
+        DatagramSocket dg;
         
-        dg = new DatagramFactory().setDatagram(DatagramFactory.Datagram.TWO, 55555);
+        dg = new DatagramFactory().setDatagram(DatagramFactory.Datagram.THREE, 55555);
         
         //instantiate receiver and sender objects
         VoipReceiver receiver = new VoipReceiver(dg);
@@ -21,5 +21,13 @@ public class voip {
         receiver.start();
         sender.start();
         
+    }
+    
+    public void audio(DatagramSocket socket, int PORT){
+        VoipReceiver receiver = new VoipReceiver(socket);
+        VoipSender   sender   = new VoipSender(socket);
+        
+        receiver.start();
+        sender.start();
     }
 }

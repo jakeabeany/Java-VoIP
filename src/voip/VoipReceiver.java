@@ -35,23 +35,6 @@ public class VoipReceiver implements Runnable{
     }
     
     public void run (){
-        //***************************************************
-        //Port to open socket on
-        int PORT = 55555;
-        //***************************************************
-        
-        //***************************************************
-        //Open a socket to receive from on port PORT
-        
-//        try{
-//		receiving_socket = new DatagramSocket4(PORT);
-//	} catch (SocketException e){
-//                System.out.println("ERROR: VoipReceiver: Could not open UDP socket to receive from.");
-//		e.printStackTrace();
-//                System.exit(0);
-//	}
-        //***************************************************
-        
         try{
             player = new AudioPlayer();
         } catch (Exception e){
@@ -62,12 +45,11 @@ public class VoipReceiver implements Runnable{
         //Main loop.
         boolean running = true;
         while (running){
-            
             //datagram1();
             
-            datagram2();
+            //datagram2();
             
-            //datagram3();
+            datagram3();
             
             //datagram4();
         }
@@ -94,7 +76,7 @@ public class VoipReceiver implements Runnable{
             e.printStackTrace();
         }
     }
-    
+    int rp = 1;
     public void datagram2(){
         //System.out.println("Receiving on datagram2");
         boolean playLast = false;
@@ -110,6 +92,7 @@ public class VoipReceiver implements Runnable{
             //Receive the packet
             receiving_socket.receive(packet);
             
+            
             //get the current packet number
             currentPacketNumber = tempBuf.getInt(0);
             
@@ -117,7 +100,7 @@ public class VoipReceiver implements Runnable{
             //repeatTimes is the difference in order between the current packet and the last one received
             if(currentPacketNumber != lastPacketReceived+1 && currentPacketNumber != 0){
                 playLast = true;
-                repeatTimes = currentPacketNumber - lastPacketReceived;
+                repeatTimes = (currentPacketNumber - lastPacketReceived);
             }
             
             //if the packets are in order, create space for a new buffer and fill it
@@ -157,6 +140,8 @@ public class VoipReceiver implements Runnable{
                 //Receive the packet
                 receiving_socket.receive(packet);
                 
+                System.out.println("Received Packets: " + rp);
+                rp++;
                 //add packet to arraylist and sort it using comparator
                 packetList.add(buffer);
             }
@@ -177,7 +162,7 @@ public class VoipReceiver implements Runnable{
                 if(currentPacketNumber >= lastPacketReceived){                    
                     if(currentPacketNumber != (lastPacketReceived+1)){
                         playLast = true;
-                        repeatTimes = currentPacketNumber - lastPacketReceived;
+                        repeatTimes = (currentPacketNumber - lastPacketReceived)-1;
                     }
                     
                     //only create a new buffer to play if no repeating is needed
@@ -200,7 +185,6 @@ public class VoipReceiver implements Runnable{
     }
     
     public void datagram4(){
-        //System.out.println("Receiving on datagram4");
         int repeatTimes = 1;
         try{
             Checksum checksum = new CRC32();
@@ -226,19 +210,15 @@ public class VoipReceiver implements Runnable{
             checksum.update(buffer, 12, buffer.length-12);
             long checkSumVal = checksum.getValue();
             
-            //System.out.println("CP: " + currentPacketNumber + "LP : " + lastPacketReceived + " ----> " + (receivedLong == checkSumVal));
+            //System.out.print("CP: " + currentPacketNumber + " LP : " + lastPacketReceived + " ----> " + (receivedLong == checkSumVal));
             
             //packet sent is the one received, add packet to bufferToPlay
             if(receivedLong == checkSumVal){
                 bufferToPlay = new byte[512];
                 bufferToPlay = Arrays.copyOfRange(buffer,12,buffer.length);
-            }else{//packet received is not the same as the one sent
-                //repeat the last packet received
-                repeatTimes = 2;
             }
             
-            for(int k = 0; k < repeatTimes; k++)
-                player.playBlock(bufferToPlay);
+            player.playBlock(bufferToPlay);
             
             
             
