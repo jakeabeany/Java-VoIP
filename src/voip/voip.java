@@ -11,7 +11,7 @@ public class voip {
         //set chosenDatagram
         DatagramSocket dg;
         
-        dg = new DatagramFactory().setDatagram(DatagramFactory.Datagram.THREE, 55555);
+        dg = new DatagramFactory().setDatagram(DatagramFactory.Datagram.ONE, 55555);
         
         //instantiate receiver and sender objects
         VoipReceiver receiver = new VoipReceiver(dg);
